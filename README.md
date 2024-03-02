@@ -1,7 +1,7 @@
 # FluxCD
 
 
-![](/images/13-image01.png)
+![](/image/13-image01.png)
 
 Let review the gitrepositories from the flux-system
 
@@ -261,7 +261,7 @@ Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists fo
 Events:                      <none>
 ```
 As soon as we couple changes below like adding one more replicas and increase the version, we would see something like below.
-![](/images/13-image02.png)
+![](/image/13-image02.png)
 
 ```sh
 $ kubectl get pods -n instavote
@@ -387,7 +387,7 @@ spec:
 Says, if we purposely make a mistake from v1 into vx below, the healthcheck may show some message.
 Reverting the vx back into v1, the healthcheck message is now gone. 
 
-![](/images/13-image03.png)
+![](/image/13-image03.png)
 
 Similiarly we could implement the changes in different folder like below. <br>
 In this case we will switch kustomization vote-dev from ./deploy/vote to ./deploy/vote-dev <br>
@@ -466,4 +466,4 @@ vote-74b56d9cb4-tb68f   1/1     Running   0          12s
 vote-74b56d9cb4-zcsfz   1/1     Running   0          22s
 ```
 
-![](/images/13-image04.png)
+![](/image/13-image04.png)
