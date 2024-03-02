@@ -1,7 +1,7 @@
 # FluxCD
 
 
-![](/image/13-image01.png)
+![](/image/13-image00.png)
 
 Let review the gitrepositories from the flux-system
 
