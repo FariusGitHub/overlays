@@ -1,5 +1,8 @@
-# FluxCD
+# Overlays and HealthCheck with FluxCD
 
+Flux CD overlays are a feature that allows users to apply customizations or configurations on top of their base configuration. This can be useful for making changes specific to different environments or stages in the deployment pipeline, such as staging or production.
+
+One of the applications of Flux CD overlays is for staging environments. By using overlays, users can easily make changes to their base configuration for staging environments without affecting the production environment. This can help streamline the deployment process and ensure that changes are thoroughly tested before being promoted to production.
 
 ![](/image/13-image00.png)
 
@@ -392,8 +395,6 @@ Reverting the vx back into v1, the healthcheck message is now gone.
 Similiarly we could implement the changes in different folder like below. <br>
 In this case we will switch kustomization vote-dev from ./deploy/vote to ./deploy/vote-dev <br>
 
-
-
 ```sh
 $ kubectl get pods -n instavote
   NAME                    READY   STATUS    RESTARTS   AGE
@@ -467,3 +468,70 @@ vote-74b56d9cb4-zcsfz   1/1     Running   0          22s
 ```
 
 ![](/image/13-image04.png)
+
+## SUMMARY
+
+The last part of above discussion is all above Flux Kustomization for an overlay as a way to customize or modify the base configuration provided by a Kustomize base. Overlays allow you to make changes to the base configuration without directly modifying it, making it easier to manage and maintain different configurations for different environments or use cases. Overlays can be used to add, remove, or modify resources, patches, or other configurations in the base.
+
+The same approach can be done with Ansible but Kubernetes is very opinionated architecture.
+
+| Feature          | Ansible Overlay | Flux Overlay   |
+|------------------|-----------------|----------------|
+| Configuration    | YAML files      | YAML files     |
+| Language         | Python          | Go             |
+| Dependency       | Ansible         | Kubernetes     |
+| Deployment       | Playbooks       | Helm charts    |
+| Scalability      | Limited         | Highly scalable|
+| Monitoring       | Ansible Tower   | Prometheus     |
+| Updates          | Manual          | Automated      |
+| Rollbacks        | Manual          | Automated      |
+| Integration      | Limited         | Extensive      |
+| Community Support| Large           | Growing        |
+
+### APPENDIX : DELETING SOURCE AND KUSTOMIZATION
+
+```sh
+$ flux logs --all-namespaces --since=2m
+  2024-03-02T04:15:21.604Z info Kustomization/vote-dev.flux-system - server-side apply completed 
+  2024-03-02T04:15:22.124Z info Kustomization/vote-dev.flux-system - Reconciliation finished in 1.048423697s, next run in 1m0s 
+  2024-03-02T04:16:25.003Z info Kustomization/vote-dev.flux-system - server-side apply completed 
+  2024-03-02T04:16:25.485Z info Kustomization/vote-dev.flux-system - Reconciliation finished in 823.913968ms, next run in 1m0s 
+  2024-03-02T04:14:46.266Z info GitRepository/instavote.flux-system - no changes since last reconcilation: observed revision 'main@sha1:5ad9822aca94f87883d2efa07aa44036611967f1' 
+  2024-03-02T04:15:16.010Z info GitRepository/instavote.flux-system - no changes since last reconcilation: observed revision 'main@sha1:5ad9822aca94f87883d2efa07aa44036611967f1' 
+  2024-03-02T04:15:21.801Z info GitRepository/flux-system.flux-system - no changes since last reconcilation: observed revision 'main@sha1:34fc5af6a2c97775a34faac6f8dc8db64ab78480' 
+  2024-03-02T04:15:46.151Z info GitRepository/instavote.flux-system - no changes since last reconcilation: observed revision 'main@sha1:5ad9822aca94f87883d2efa07aa44036611967f1' 
+  2024-03-02T04:16:17.792Z info GitRepository/instavote.flux-system - no changes since last reconcilation: observed revision 'main@sha1:5ad9822aca94f87883d2efa07aa44036611967f1' 
+  2024-03-02T04:16:18.958Z info GitRepository/flux-system.flux-system - no changes since last reconcilation: observed revision 'main@sha1:34fc5af6a2c97775a34faac6f8dc8db64ab78480' 
+
+$ flux get kustomization 
+  NAME       	REVISION          	SUSPENDED	READY	MESSAGE                              
+  flux-system	main@sha1:34fc5af6	False    	True 	Applied revision: main@sha1:34fc5af6	
+  vote-dev   	main@sha1:5ad9822a	False    	True 	Applied revision: main@sha1:5ad9822a	
+
+$ flux delete kustomization vote-dev 
+  Are you sure you want to delete this kustomization: y
+  ► deleting kustomization vote-dev in flux-system namespace
+  ✔ kustomization deleted
+
+$ flux logs --all-namespaces --since=2m
+  2024-03-02T04:39:01.186Z info GitRepository/instavote.flux-system - no changes since last reconcilation: observed revision 'main@sha1:5ad9822aca94f87883d2efa07aa44036611967f1' 
+  2024-03-02T04:39:17.548Z info GitRepository/flux-system.flux-system - no changes since last reconcilation: observed revision 'main@sha1:34fc5af6a2c97775a34faac6f8dc8db64ab78480' 
+  2024-03-02T04:39:31.586Z info GitRepository/instavote.flux-system - no changes since last reconcilation: observed revision 'main@sha1:5ad9822aca94f87883d2efa07aa44036611967f1' 
+  2024-03-02T04:40:01.459Z info GitRepository/instavote.flux-system - no changes since last reconcilation: observed revision 'main@sha1:5ad9822aca94f87883d2efa07aa44036611967f1' 
+  2024-03-02T04:40:18.705Z info GitRepository/flux-system.flux-system - no changes since last reconcilation: observed revision 'main@sha1:34fc5af6a2c97775a34faac6f8dc8db64ab78480' 
+  2024-03-02T04:40:31.898Z info GitRepository/instavote.flux-system - no changes since last reconcilation: observed revision 'main@sha1:5ad9822aca94f87883d2efa07aa44036611967f1' 
+
+$ flux get sources git
+  NAME       	REVISION          	SUSPENDED	READY	MESSAGE                                           
+  flux-system	main@sha1:34fc5af6	False    	True 	stored artifact for revision 'main@sha1:34fc5af6'	
+  instavote  	main@sha1:5ad9822a	False    	True 	stored artifact for revision 'main@sha1:5ad9822a'	
+
+$ flux delete source git instavote
+  Are you sure you want to delete this source git: y
+  ► deleting source git instavote in flux-system namespace
+  ✔ source git deleted
+
+$ flux logs --all-namespaces --since=2m
+2024-03-02T04:45:19.845Z info GitRepository/flux-system.flux-system - no changes since last reconcilation: observed revision 'main@sha1:34fc5af6a2c97775a34faac6f8dc8db64ab78480' 
+2024-03-02T04:46:17.833Z info GitRepository/flux-system.flux-system - no changes since last reconcilation: observed revision 'main@sha1:34fc5af6a2c97775a34faac6f8dc8db64ab78480' 
+```
